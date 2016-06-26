@@ -56,6 +56,8 @@ struct Item: AdditionalInformationConvertible {
     var additionalInformation: String
     var isCheckedOff: Bool
     
+    
+    // TODO: MOVE THESE FUNCTIONS TO PROTOCOL EXTENSIONS
     mutating func parseForAddInfo() {
         let wordsArray = itemMessage.componentsSeparatedByString(" ")
         name = wordsArray[0]
@@ -237,6 +239,24 @@ func loadResource<A>(resource: Resource<A>, withBlock: A? -> Void) {
 ////    resource.parse(<#T##[String : AnyObject]#>, <#T##String#>, <#T##String#>)
 //}
 
+protocol LoadingType {
+    associatedtype ResourceType
+    var spinner: UIActivityIndicatorView { get }
+}
+
+//FIXME: BRAH
+extension LoadingType where Self: UIViewController {
+    func load(resource: ResourceType) { item in
+            if let item = item {
+                //                print("load = \(self.resource)")
+                //                print("loadResourceITEM = \(item)")
+                self.spinner.stopAnimating()
+                self.items.append(item)
+                self.tableView.reloadData()
+        }
+    }
+}
+
 
 class MyTableViewController<T>: UITableViewController, UITextFieldDelegate {
     
@@ -250,6 +270,7 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate {
     let configureCell: (UITableViewCell, T) -> ()
     let configureSelf: MyTableViewController -> ()
     var didSelect: T -> () = { _ in }
+    let spinner = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
     
     init(resource: Resource<T>, configureCell: (UITableViewCell, T) -> (), configureSelf: MyTableViewController -> ()) {
         self.resource = resource
@@ -261,13 +282,19 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        spinner.hidesWhenStopped = true
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(spinner)
+        spinner.center = view.center
         
         configureSelf(self)
         
+        spinner.startAnimating()
         loadResource(resource) { item in
             if let item = item {
                 //                print("load = \(self.resource)")
                 //                print("loadResourceITEM = \(item)")
+                self.spinner.stopAnimating()
                 self.items.append(item)
                 self.tableView.reloadData()
             }
