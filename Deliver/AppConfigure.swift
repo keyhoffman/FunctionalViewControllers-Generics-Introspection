@@ -11,7 +11,7 @@ import UIKit
 
 func app() -> UITabBarController {
     
-    let myListViewController = MyTableViewController(resource: itemResource, configureCell: { cell, item in
+    let myListViewController = MyTableViewController(resource: Item.resource, configureCell: { cell, item in
         cell.textLabel?.text = item.name
         cell.detailTextLabel?.text = item.additionalInformation
         cell.accessoryType = item.isCheckedOff ? .Checkmark : .DisclosureIndicator

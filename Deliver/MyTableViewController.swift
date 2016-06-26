@@ -45,7 +45,7 @@ protocol FirebaseObservable: FirebaseType {
     
     associatedtype A
     //associatedtype Resource
-    var parse: ([String:AnyObject], [String], String, String) -> A? { get }
+    var parse: (FBDictionary?, [String], String, String) -> A? { get }
 }
 
 struct Item: AdditionalInformationConvertible {
@@ -78,7 +78,8 @@ struct BodyThing {
 }
 
 extension BodyThing {
-    init?(data: [String:AnyObject], FBKeys: [String], itemID: String, path: String) {
+    init?(data: FBDictionary?, FBKeys: [String], itemID: String, path: String) {
+        guard let data = data else { return nil }
         guard let name = data["name"] as? String, let color = data["color"] as? String, let yum = data["yummy"] as? Bool else { return nil }
         self.itemID = itemID
         self.name = name
@@ -86,10 +87,13 @@ extension BodyThing {
         self.isYummy = yum
         self.path = path
     }
+    
+//    func resource(itemID: String) -> Resource<BodyThing> { return Resource(path: "bodyThing/\(itemID)", key: "bodyThingKey" , eventType: .ChildAdded, parse: BodyThing.init, needsAutoId: true, FBKeys: btKeys, resourceType: .BodyThing) }
 }
 
 extension Item {
-    init?(data: [String:AnyObject], FBKeys: [String], key: String, path: String) {
+    init?(data: FBDictionary?, FBKeys: [String], key: String, path: String) {
+        guard let data = data else { return nil }
         guard let itemMessage = data["itemMessage"] as? String, let name = data["name"] as? String,
             let addInfo = data["additionalInformation"] as? String, let checked = data["isCheckedOff"] as? Bool else { return nil }
         self.itemMessage = itemMessage
@@ -99,6 +103,8 @@ extension Item {
         self.key = key
         self.path = path
     }
+    
+    static let resource = Resource(path: "items", key: "itemsKey", eventType: .ChildAdded, parse: Item.init, needsAutoId: true, FBKeys: itemKeys, resourceType: .Item)
 }
 
 //extension Resource {
@@ -115,13 +121,14 @@ extension Item {
 
 let RootRef = FIRDatabase.database().reference()
 
+typealias FBDictionary = [String:AnyObject]
 
 struct Resource<A>: FirebaseObservable {
     let path: String
     let key: String
     let eventType: FIRDataEventType
 //    let parse: (Resource, [String:AnyObject], [String], String, String) -> A?
-    let parse: ([String:AnyObject], [String], String, String) -> A?
+    let parse: (FBDictionary?, [String], String, String) -> A?
     let needsAutoId: Bool
     let FBKeys: [String]
     let resourceType: ResourceType
@@ -137,6 +144,8 @@ enum ItemType {
     case IsCheckedOff(Bool)
 }
 
+
+
 enum ResourceType {
     case Item
     case BodyThing
@@ -146,11 +155,15 @@ enum ResourceType {
 
 //let newItemKeys: [String:ItemType] = ["itemMessage":.ItemMessage(Item.itemMessage), "name":.Name(<#T##Item#>)]
 
+let fakeItemKeys: [String:Any.Type] = ["itemMessage" : String.self, "name" : String.self, "additionalInformation" : String.self, "isCheckedOff" : Bool.self]
+
 let itemKeys = ["itemMessage", "name", "additionalInformation", "isCheckedOff"]
 
 let btKeys = ["yummy", "color", "name"]
 
-let itemResource = Resource(path: "items", key: "itemsKey", eventType: .ChildAdded, parse: Item.init, needsAutoId: true, FBKeys: itemKeys, resourceType: .Item)
+
+//TODO: MOVE Resources into extensions
+//let itemResource = Resource(path: "items", key: "itemsKey", eventType: .ChildAdded, parse: Item.init, needsAutoId: true, FBKeys: itemKeys, resourceType: .Item)
 
 
 func bodyThingResource(itemID: String) -> Resource<BodyThing> { return Resource(path: "bodyThing/\(itemID)", key: "bodyThingKey" , eventType: .ChildAdded, parse: BodyThing.init, needsAutoId: true, FBKeys: btKeys, resourceType: .BodyThing) }
@@ -158,51 +171,58 @@ func bodyThingResource(itemID: String) -> Resource<BodyThing> { return Resource(
 let myItem = Item(key: "myKey", itemMessage: "myItemMessage", path: "myPath", name: "myName", additionalInformation: "myAddInfo", isCheckedOff: true)
 let myItemMirror = Mirror(reflecting: myItem)
 
-func loadResource<A>(resource: Resource<A>, withBlock: (item: A?) -> Void) {
-    print("myItemMirror = \(myItemMirror)")
-    print("myItemMirror childern = \(myItemMirror.children)")
-    print("myItemMirror description = \(myItemMirror.description)")
-    print("myItemMirrow subjectType = \(myItemMirror.subjectType)")
-    CustomReflectable.self
-    dump(myItem)
-    var mirrorArray: [(String?,Any)] = []
-    for case let (label?, value) in myItemMirror.children {
-        let labelMirror = Mirror(reflecting: label)
-        let valueMirror = Mirror(reflecting: value)
-        mirrorArray.append((label, valueMirror.subjectType))
-//        print("Item valueMirror = \(valueMirror.subjectType)")
-//        print("Item labelMirror = \(labelMirror.subjectType)")
-//        print("myItemMirror(label?, value) = \(label, value)")
-    }
-    var i = 0
-    print("mirrorArray = \(mirrorArray)")
+func loadResource<A>(resource: Resource<A>, withBlock: A? -> Void) {
     RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
-        if let data = snapshot.value as? [String:AnyObject] {
-            let dataMirror = Mirror(reflecting: data)
-            for (l, v) in mirrorArray {
-                guard let r = data[l!] else { continue }
-                switch r {
-                case let r as String: print("String -- \(l!, r, v)")
-                case let r as Bool:   print("Bool -- \(l!, r, v)")
-                default: print("FAIL"); continue
-                }
-            }
-//            print("dataMirror = \(dataMirror)")
-//            print("dataMirror[\(i)] = \(dataMirror.children)")
-            for case let (label?, value) in dataMirror.children {
-                let labelMirror = Mirror(reflecting: label)
-                let valueMirror = Mirror(reflecting: value)
-//                print("valueMirror = \(valueMirror.subjectType)")
-//                print("labelMirror = \(labelMirror.subjectType)")
-//                print("dataMirror(label?, value = \(label, value)")
-            }
-            i += 1
-            //print(data)
-            withBlock(item: resource.parse(data, resource.FBKeys, snapshot.key, resource.path))
-        }
-        withBlock(item: nil)
+        withBlock(resource.parse(snapshot.value as? FBDictionary, resource.FBKeys, snapshot.key, resource.path))
     }
 }
+
+//func loadResource<A>(resource: Resource<A>, withBlock: (A?) -> Void) {
+//    print("myItemMirror = \(myItemMirror)")
+//    print("myItemMirror childern = \(myItemMirror.children)")
+//    print("myItemMirror description = \(myItemMirror.description)")
+//    print("myItemMirrow subjectType = \(myItemMirror.subjectType)")
+//    CustomReflectable.self
+//    dump(myItem)
+//    var mirrorArray: [(String?,Any)] = []
+//    for case let (label?, value) in myItemMirror.children {
+//        let labelMirror = Mirror(reflecting: label)
+//        let valueMirror = Mirror(reflecting: value)
+//        mirrorArray.append((label, valueMirror.subjectType))
+////        print("Item valueMirror = \(valueMirror.subjectType)")
+////        print("Item labelMirror = \(labelMirror.subjectType)")
+////        print("myItemMirror(label?, value) = \(label, value)")
+//    }
+//    var i = 0
+//    print("mirrorArray = \(mirrorArray)")
+//    RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
+//        withBlock(resource.parse(snapshot.value as? [String:AnyObject], resource.FBKeys, snapshot.key, resource.path))
+//        if let data = snapshot.value as? [String:AnyObject] {
+//            let dataMirror = Mirror(reflecting: data)
+//            for (l, v) in mirrorArray {
+//                guard let r = data[l!] else { continue }
+//                switch r {
+//                case let r as String: print("String -- \(l!, r, v)")
+//                case let r as Bool:   print("Bool -- \(l!, r, v)")
+//                default: print("FAIL"); continue
+//                }
+//            }
+////            print("dataMirror = \(dataMirror)")
+////            print("dataMirror[\(i)] = \(dataMirror.children)")
+//            for case let (label?, value) in dataMirror.children {
+//                let labelMirror = Mirror(reflecting: label)
+//                let valueMirror = Mirror(reflecting: value)
+////                print("valueMirror = \(valueMirror.subjectType)")
+////                print("labelMirror = \(labelMirror.subjectType)")
+////                print("dataMirror(label?, value = \(label, value)")
+//            }
+//            i += 1
+//            //print(data)
+//            withBlock(resource.parse(data, resource.FBKeys, snapshot.key, resource.path))
+//        }
+//        withBlock(nil)
+//    }
+//}
 
 //func sendResource<A>(resource: Resource<A>, itemToSend item: String) {
 //    print("sendResource = \(resource)")
