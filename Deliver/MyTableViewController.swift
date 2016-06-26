@@ -40,12 +40,13 @@ protocol FireBaseSendable: FirebaseType {
 protocol FirebaseObservable: FirebaseType {
     var path: String { get }
     var key: String { get }
-    var FBKeys: [String] { get }
+//    var FBKeys: [String] { get }
     var eventType: FIRDataEventType { get }
     
-    associatedtype A
+    associatedtype M
     //associatedtype Resource
-    var parse: (FBDictionary?, [String], String, String) -> A? { get }
+//    var parse: (FBDictionary?, [String], String, String) -> A? { get }
+    var parse: (FBDictionary?, String, String) -> M? { get }
 }
 
 struct Item: AdditionalInformationConvertible {
@@ -80,7 +81,7 @@ struct BodyThing {
 }
 
 extension BodyThing {
-    init?(data: FBDictionary?, FBKeys: [String], itemID: String, path: String) {
+    init?(data: FBDictionary?, itemID: String, path: String) {
         guard let data = data else { return nil }
         guard let name = data["name"] as? String, let color = data["color"] as? String, let yum = data["yummy"] as? Bool else { return nil }
         self.itemID = itemID
@@ -92,7 +93,7 @@ extension BodyThing {
 }
 
 extension Item {
-    init?(data: FBDictionary?, FBKeys: [String], key: String, path: String) {
+    init?(data: FBDictionary?, key: String, path: String) {
         guard let data = data else { return nil }
         guard let itemMessage = data["itemMessage"] as? String, let name = data["name"] as? String,
             let addInfo = data["additionalInformation"] as? String, let checked = data["isCheckedOff"] as? Bool else { return nil }
@@ -106,11 +107,11 @@ extension Item {
     
     var bodyThings: Resource<BodyThing> {
         let btPath = "bodyThing/\(key)"
-        let resource = Resource(path: btPath, key: "bodyThingKey", eventType: .ChildAdded, parse: BodyThing.init, needsAutoId: true, FBKeys: btKeys, resourceType: .BodyThing)
+        let resource = Resource(path: btPath, key: "bodyThingKey", eventType: .ChildAdded, parse: BodyThing.init)
         return resource
     }
     
-    static let resource = Resource(path: "items", key: "itemsKey", eventType: .ChildAdded, parse: Item.init, needsAutoId: true, FBKeys: itemKeys, resourceType: .Item)
+    static let resource = Resource(path: "items", key: "itemsKey", eventType: .ChildAdded, parse: Item.init)
 }
 
 typealias FBDictionary = [String:AnyObject]
@@ -120,14 +121,12 @@ struct Resource<A>: FirebaseObservable {
     let path: String
     let key: String
     let eventType: FIRDataEventType
-//    let parse: (Resource, [String:AnyObject], [String], String, String) -> A?
-    let parse: (FBDictionary?, [String], String, String) -> A?
-    let needsAutoId: Bool
-    let FBKeys: [String]
-    let resourceType: ResourceType
+    let parse: (FBDictionary?, String, String) -> A?
+//    let needsAutoId: Bool
+//    let FBKeys: [String]
 }
 
-enum ResourceType {
+enum MyResourceType {
     case Item
     case BodyThing
 }
@@ -138,40 +137,17 @@ let itemKeys = ["itemMessage", "name", "additionalInformation", "isCheckedOff"]
 
 let btKeys = ["yummy", "color", "name"]
 
-func loadResource<A>(resource: Resource<A>, withBlock: A? -> Void) {
-    resource.RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
-        withBlock(resource.parse(snapshot.value as? FBDictionary, resource.FBKeys, snapshot.key, resource.path))
-    }
-}
-
-
-//func sendResource<A>(resource: Resource<A>, itemToSend item: String) {
-//    print("sendResource = \(resource)")
-////    if let newItem = resource.createNew(resource.path, item) {
-////        if resource.needsAutoId {
-//////            RootRef.child(newItem)
-////        } else {
-////
-////        }
-////    }
-//
-////    resource.parse(<#T##[String : AnyObject]#>, <#T##String#>, <#T##String#>)
-//}
-
 protocol LoadingType {
     associatedtype ResourceType
-    var spinner: UIActivityIndicatorView { get }
-    func configureMe(value: ResourceType)
+    var spinner: UIActivityIndicatorView? { get set }
+    func configureMe(item: ResourceType)
 }
 
-//FIXME: BRAH -- watch objcio lecture 3
 extension LoadingType where Self: UIViewController {
     func loadMe(resource: Resource<ResourceType>, withBlock: ResourceType? -> Void) {
-        spinner.startAnimating()
-        loadResource(resource) { [weak self] item in
-            guard let item = item else { return } //TOD: display error
-            self?.spinner.stopAnimating()
-            self?.configureMe(item)
+        spinner?.startAnimating()
+        resource.RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
+            withBlock(resource.parse(snapshot.value as? FBDictionary, snapshot.key, resource.path))
         }
     }
 }
@@ -186,8 +162,10 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, Load
     let configureSelf: MyTableViewController -> ()
     var spinner: UIActivityIndicatorView?
     
-    func configureMe(value: ResourceType) {
-        
+    func configureMe(item: T) {
+        spinner?.stopAnimating()
+        items.append(item)
+        tableView.reloadData()
     }
     
     init(resource: Resource<T>, configureCell: (UITableViewCell, T) -> (), configureSelf: MyTableViewController -> ()) {
@@ -201,22 +179,17 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, Load
     override func viewDidLoad() {
         super.viewDidLoad()
         configureSelf(self)
-        loadMe(resource) { item in
-            configureMe(item)
-        }
         load()
     }
     
     private func load() {
-        spinner?.startAnimating()
-        loadResource(resource) { [weak self] item in
-            guard let item = item else { return }
-            self?.spinner?.stopAnimating()
-            self?.items.append(item)
-            self?.tableView.reloadData()
+        loadMe(resource) { [weak self] item in
+            if let item = item {
+                self?.configureMe(item)
+            }
         }
     }
-
+    
     // MARK: Textfield Delegate
     
     func textFieldShouldReturn(textField: UITextField) -> Bool {
