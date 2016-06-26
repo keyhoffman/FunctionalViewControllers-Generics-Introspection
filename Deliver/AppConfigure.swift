@@ -16,20 +16,23 @@ func app() -> UITabBarController {
         cell.detailTextLabel?.text = item.additionalInformation
         cell.accessoryType = item.isCheckedOff ? .Checkmark : .DisclosureIndicator
     }) { myListVC in
+        myListVC.spinner = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+        myListVC.spinner?.addToSuperView(myListVC)
+        
         let navButt = UIBarButtonItem(barButtonSystemItem: .Add, target: myListVC, action: #selector(myListVC.send))
         myListVC.navigationItem.rightBarButtonItem = navButt
         
         let textField = UITextField()
         textField.delegate = myListVC
         textField.placeholder = "Search for items"
-        textField.frame = CGRectMake(0, 0, myListVC.navigationController!.navigationBar.frame.size.width, 21)
+        textField.frame = CGRectMake(0, 0, myListVC.navigationController?.navigationBar.frame.size.width ?? 0, 21)
         myListVC.navigationItem.titleView = textField
         
         myListVC.textFieldShouldReturn(textField)
     }
     let nav1 = UINavigationController(rootViewController: myListViewController)
     myListViewController.didSelect = { item in
-        let bodyVC = MyTableViewController(resource: bodyThingResource(item.key), configureCell: { cell, bodyThing in
+        let bodyVC = MyTableViewController(resource: item.bodyThings, configureCell: { cell, bodyThing in
             cell.textLabel?.text = bodyThing.name
             cell.detailTextLabel?.text = bodyThing.color
             cell.accessoryType = bodyThing.isYummy ? .Checkmark : .DisclosureIndicator
@@ -55,6 +58,21 @@ func app() -> UITabBarController {
     
     return myTabController
     
+}
+
+extension UITextField {
+    func clearText() {
+        self.text = ""
+    }
+}
+
+extension UIActivityIndicatorView {
+    func addToSuperView(parentVC: UIViewController) {
+        self.hidesWhenStopped = true
+        self.translatesAutoresizingMaskIntoConstraints = false
+        self.center = parentVC.view.center
+        parentVC.view.addSubview(self)
+    }
 }
 
 extension String {

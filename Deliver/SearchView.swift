@@ -52,3 +52,55 @@
 //    }
 //
 //}
+
+//let myItem = Item(key: "myKey", itemMessage: "myItemMessage", path: "myPath", name: "myName", additionalInformation: "myAddInfo", isCheckedOff: true)
+//let myItemMirror = Mirror(reflecting: myItem)
+
+
+//func loadResource<A>(resource: Resource<A>, withBlock: (A?) -> Void) {
+//    print("myItemMirror = \(myItemMirror)")
+//    print("myItemMirror childern = \(myItemMirror.children)")
+//    print("myItemMirror description = \(myItemMirror.description)")
+//    print("myItemMirrow subjectType = \(myItemMirror.subjectType)")
+//    CustomReflectable.self
+//    dump(myItem)
+//    var mirrorArray: [(String?,Any)] = []
+//    for case let (label?, value) in myItemMirror.children {
+//        let labelMirror = Mirror(reflecting: label)
+//        let valueMirror = Mirror(reflecting: value)
+//        mirrorArray.append((label, valueMirror.subjectType))
+////        print("Item valueMirror = \(valueMirror.subjectType)")
+////        print("Item labelMirror = \(labelMirror.subjectType)")
+////        print("myItemMirror(label?, value) = \(label, value)")
+//    }
+//    var i = 0
+//    print("mirrorArray = \(mirrorArray)")
+//    RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
+//        withBlock(resource.parse(snapshot.value as? [String:AnyObject], resource.FBKeys, snapshot.key, resource.path))
+//        if let data = snapshot.value as? [String:AnyObject] {
+//            let dataMirror = Mirror(reflecting: data)
+//            for (l, v) in mirrorArray {
+//                guard let r = data[l!] else { continue }
+//                switch r {
+//                case let r as String: print("String -- \(l!, r, v)")
+//                case let r as Bool:   print("Bool -- \(l!, r, v)")
+//                default: print("FAIL"); continue
+//                }
+//            }
+////            print("dataMirror = \(dataMirror)")
+////            print("dataMirror[\(i)] = \(dataMirror.children)")
+//            for case let (label?, value) in dataMirror.children {
+//                let labelMirror = Mirror(reflecting: label)
+//                let valueMirror = Mirror(reflecting: value)
+////                print("valueMirror = \(valueMirror.subjectType)")
+////                print("labelMirror = \(labelMirror.subjectType)")
+////                print("dataMirror(label?, value = \(label, value)")
+//            }
+//            i += 1
+//            //print(data)
+//            withBlock(resource.parse(data, resource.FBKeys, snapshot.key, resource.path))
+//        }
+//        withBlock(nil)
+//    }
+//}
+

@@ -89,8 +89,6 @@ extension BodyThing {
         self.isYummy = yum
         self.path = path
     }
-    
-//    func resource(itemID: String) -> Resource<BodyThing> { return Resource(path: "bodyThing/\(itemID)", key: "bodyThingKey" , eventType: .ChildAdded, parse: BodyThing.init, needsAutoId: true, FBKeys: btKeys, resourceType: .BodyThing) }
 }
 
 extension Item {
@@ -106,26 +104,19 @@ extension Item {
         self.path = path
     }
     
+    var bodyThings: Resource<BodyThing> {
+        let btPath = "bodyThing/\(key)"
+        let resource = Resource(path: btPath, key: "bodyThingKey", eventType: .ChildAdded, parse: BodyThing.init, needsAutoId: true, FBKeys: btKeys, resourceType: .BodyThing)
+        return resource
+    }
+    
     static let resource = Resource(path: "items", key: "itemsKey", eventType: .ChildAdded, parse: Item.init, needsAutoId: true, FBKeys: itemKeys, resourceType: .Item)
 }
-
-//extension Resource {
-//    init?(resource: Resource<A>, data: [String:AnyObject], FBKeys: [String], key: String, path: String) {
-//        for myKey in data.keys {
-//            
-//        }
-//        for key in FBKeys {
-//            guard let r = data[key] else { return nil }
-//            print(r)
-//        }
-//    }
-//}
-
-let RootRef = FIRDatabase.database().reference()
 
 typealias FBDictionary = [String:AnyObject]
 
 struct Resource<A>: FirebaseObservable {
+    let RootRef = FIRDatabase.database().reference()
     let path: String
     let key: String
     let eventType: FIRDataEventType
@@ -134,28 +125,12 @@ struct Resource<A>: FirebaseObservable {
     let needsAutoId: Bool
     let FBKeys: [String]
     let resourceType: ResourceType
-    //let createNew: (String, String) -> A?
 }
-
-//let key: [String:AnyObject] = ["name":, "corn": Int]
-
-enum ItemType {
-    case Name(Item)
-    case ItemMessage(Item)
-    case AdditionalInformation(String)
-    case IsCheckedOff(Bool)
-}
-
-
 
 enum ResourceType {
     case Item
     case BodyThing
 }
-
-//let itemKeys: [String:ItemType] = ["itemMessage":.ItemMessage, "name":.Name, "additionalInformation":.AdditionalInformation, "isCheckedOff":.IsCheckedOff]
-
-//let newItemKeys: [String:ItemType] = ["itemMessage":.ItemMessage(Item.itemMessage), "name":.Name(<#T##Item#>)]
 
 let fakeItemKeys: [String:Any.Type] = ["itemMessage" : String.self, "name" : String.self, "additionalInformation" : String.self, "isCheckedOff" : Bool.self]
 
@@ -163,68 +138,12 @@ let itemKeys = ["itemMessage", "name", "additionalInformation", "isCheckedOff"]
 
 let btKeys = ["yummy", "color", "name"]
 
-
-//TODO: MOVE Resources into extensions
-//let itemResource = Resource(path: "items", key: "itemsKey", eventType: .ChildAdded, parse: Item.init, needsAutoId: true, FBKeys: itemKeys, resourceType: .Item)
-
-
-func bodyThingResource(itemID: String) -> Resource<BodyThing> { return Resource(path: "bodyThing/\(itemID)", key: "bodyThingKey" , eventType: .ChildAdded, parse: BodyThing.init, needsAutoId: true, FBKeys: btKeys, resourceType: .BodyThing) }
-
-let myItem = Item(key: "myKey", itemMessage: "myItemMessage", path: "myPath", name: "myName", additionalInformation: "myAddInfo", isCheckedOff: true)
-let myItemMirror = Mirror(reflecting: myItem)
-
 func loadResource<A>(resource: Resource<A>, withBlock: A? -> Void) {
-    RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
+    resource.RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
         withBlock(resource.parse(snapshot.value as? FBDictionary, resource.FBKeys, snapshot.key, resource.path))
     }
 }
 
-//func loadResource<A>(resource: Resource<A>, withBlock: (A?) -> Void) {
-//    print("myItemMirror = \(myItemMirror)")
-//    print("myItemMirror childern = \(myItemMirror.children)")
-//    print("myItemMirror description = \(myItemMirror.description)")
-//    print("myItemMirrow subjectType = \(myItemMirror.subjectType)")
-//    CustomReflectable.self
-//    dump(myItem)
-//    var mirrorArray: [(String?,Any)] = []
-//    for case let (label?, value) in myItemMirror.children {
-//        let labelMirror = Mirror(reflecting: label)
-//        let valueMirror = Mirror(reflecting: value)
-//        mirrorArray.append((label, valueMirror.subjectType))
-////        print("Item valueMirror = \(valueMirror.subjectType)")
-////        print("Item labelMirror = \(labelMirror.subjectType)")
-////        print("myItemMirror(label?, value) = \(label, value)")
-//    }
-//    var i = 0
-//    print("mirrorArray = \(mirrorArray)")
-//    RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
-//        withBlock(resource.parse(snapshot.value as? [String:AnyObject], resource.FBKeys, snapshot.key, resource.path))
-//        if let data = snapshot.value as? [String:AnyObject] {
-//            let dataMirror = Mirror(reflecting: data)
-//            for (l, v) in mirrorArray {
-//                guard let r = data[l!] else { continue }
-//                switch r {
-//                case let r as String: print("String -- \(l!, r, v)")
-//                case let r as Bool:   print("Bool -- \(l!, r, v)")
-//                default: print("FAIL"); continue
-//                }
-//            }
-////            print("dataMirror = \(dataMirror)")
-////            print("dataMirror[\(i)] = \(dataMirror.children)")
-//            for case let (label?, value) in dataMirror.children {
-//                let labelMirror = Mirror(reflecting: label)
-//                let valueMirror = Mirror(reflecting: value)
-////                print("valueMirror = \(valueMirror.subjectType)")
-////                print("labelMirror = \(labelMirror.subjectType)")
-////                print("dataMirror(label?, value = \(label, value)")
-//            }
-//            i += 1
-//            //print(data)
-//            withBlock(resource.parse(data, resource.FBKeys, snapshot.key, resource.path))
-//        }
-//        withBlock(nil)
-//    }
-//}
 
 //func sendResource<A>(resource: Resource<A>, itemToSend item: String) {
 //    print("sendResource = \(resource)")
@@ -242,35 +161,34 @@ func loadResource<A>(resource: Resource<A>, withBlock: A? -> Void) {
 protocol LoadingType {
     associatedtype ResourceType
     var spinner: UIActivityIndicatorView { get }
+    func configureMe(value: ResourceType)
 }
 
-//FIXME: BRAH
+//FIXME: BRAH -- watch objcio lecture 3
 extension LoadingType where Self: UIViewController {
-    func load(resource: ResourceType) { item in
-            if let item = item {
-                //                print("load = \(self.resource)")
-                //                print("loadResourceITEM = \(item)")
-                self.spinner.stopAnimating()
-                self.items.append(item)
-                self.tableView.reloadData()
+    func loadMe(resource: Resource<ResourceType>, withBlock: ResourceType? -> Void) {
+        spinner.startAnimating()
+        loadResource(resource) { [weak self] item in
+            guard let item = item else { return } //TOD: display error
+            self?.spinner.stopAnimating()
+            self?.configureMe(item)
         }
     }
 }
 
 
-class MyTableViewController<T>: UITableViewController, UITextFieldDelegate {
+class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, LoadingType {
     
-    var items: [T] = [] {
-        didSet {
-            tableView.reloadData()
-        }
-    }
-    
+    var items: [T] = []
+    var didSelect: T -> () = { _ in }
     let resource: Resource<T>
     let configureCell: (UITableViewCell, T) -> ()
     let configureSelf: MyTableViewController -> ()
-    var didSelect: T -> () = { _ in }
-    let spinner = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+    var spinner: UIActivityIndicatorView?
+    
+    func configureMe(value: ResourceType) {
+        
+    }
     
     init(resource: Resource<T>, configureCell: (UITableViewCell, T) -> (), configureSelf: MyTableViewController -> ()) {
         self.resource = resource
@@ -282,32 +200,30 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        spinner.hidesWhenStopped = true
-        spinner.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(spinner)
-        spinner.center = view.center
-        
         configureSelf(self)
-        
-        spinner.startAnimating()
-        loadResource(resource) { item in
-            if let item = item {
-                //                print("load = \(self.resource)")
-                //                print("loadResourceITEM = \(item)")
-                self.spinner.stopAnimating()
-                self.items.append(item)
-                self.tableView.reloadData()
-            }
+        loadMe(resource) { item in
+            configureMe(item)
+        }
+        load()
+    }
+    
+    private func load() {
+        spinner?.startAnimating()
+        loadResource(resource) { [weak self] item in
+            guard let item = item else { return }
+            self?.spinner?.stopAnimating()
+            self?.items.append(item)
+            self?.tableView.reloadData()
         }
     }
 
     // MARK: Textfield Delegate
     
     func textFieldShouldReturn(textField: UITextField) -> Bool {
-        if let text = textField.text {
-            //            if !text.isEmpty && text.wordsInString.count < 3 { print(text, text.wordsInString.count); sendResource(resource, itemToSend: text) }
-            textField.text = ""
-        }
+        guard let text = textField.text else { return false }
+//            if !text.isEmpty && text.wordsInString.count < 3 { print(text, text.wordsInString.count); sendResource(resource, itemToSend: text) }
+        print(text)
+        textField.clearText()
         return true
     }
     
