@@ -55,7 +55,7 @@
 
 //let myItem = Item(key: "myKey", itemMessage: "myItemMessage", path: "myPath", name: "myName", additionalInformation: "myAddInfo", isCheckedOff: true)
 //let myItemMirror = Mirror(reflecting: myItem)
-
+//let fakeItemKeys: [String:Any.Type] = ["itemMessage" : String.self, "name" : String.self, "additionalInformation" : String.self, "isCheckedOff" : Bool.self]
 
 //func loadResource<A>(resource: Resource<A>, withBlock: (A?) -> Void) {
 //    print("myItemMirror = \(myItemMirror)")

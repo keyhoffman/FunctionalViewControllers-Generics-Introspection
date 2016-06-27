@@ -15,21 +15,11 @@ protocol FirebaseType {
     var key: String { get }
 }
 
-protocol AdditionalInformationType {
-    var additionalInformation: String { get set }
-}
-
-protocol AdditionalInformationConvertible: AdditionalInformationType {
-    mutating func parseForAddInfo()
-}
 
 protocol FireBaseSendable: FirebaseType {
     var path: String { get }
     var key: String { get }
     var needsAutoId: Bool { get }
-    
-    associatedtype A
-    var createNew: (String, String) -> A? { get }
 }
 
 //protocol CheckOffable: FirebaseType {
@@ -40,16 +30,13 @@ protocol FireBaseSendable: FirebaseType {
 protocol FirebaseObservable: FirebaseType {
     var path: String { get }
     var key: String { get }
-//    var FBKeys: [String] { get }
-    var eventType: FIRDataEventType { get }
+    var FBKeys: [String] { get }
     
     associatedtype M
-    //associatedtype Resource
-//    var parse: (FBDictionary?, [String], String, String) -> A? { get }
     var parse: (FBDictionary?, String, String) -> M? { get }
 }
 
-struct Item: AdditionalInformationConvertible {
+struct Item {
     let key: String
     let itemMessage: String
     let path: String
@@ -59,16 +46,6 @@ struct Item: AdditionalInformationConvertible {
     
     
     // TODO: MOVE THESE FUNCTIONS TO PROTOCOL EXTENSIONS
-    mutating func parseForAddInfo() {
-        let wordsArray = itemMessage.componentsSeparatedByString(" ")
-        name = wordsArray[0]
-        if wordsArray.count < 2 || wordsArray.count > 2 {
-            additionalInformation = ""
-        } else {
-            additionalInformation = wordsArray[1][wordsArray[1].startIndex] == "#" ? wordsArray[1] :  ""
-        }
-    }
-    
     mutating func checkOff(key: String, path: String) { isCheckedOff = !isCheckedOff }
 }
 
@@ -105,13 +82,17 @@ extension Item {
         self.path = path
     }
     
+    static let itemKeys = ["itemMessage", "name", "additionalInformation", "isCheckedOff"]
+    
+    static let btKeys = ["yummy", "color", "name"]
+    
     var bodyThings: Resource<BodyThing> {
         let btPath = "bodyThing/\(key)"
-        let resource = Resource(path: btPath, key: "bodyThingKey", eventType: .ChildAdded, parse: BodyThing.init)
+        let resource = Resource(path: btPath, key: "bodyThingKey", parse: BodyThing.init, resourceType: .BodyThing, FBKeys: Item.btKeys)
         return resource
     }
     
-    static let resource = Resource(path: "items", key: "itemsKey", eventType: .ChildAdded, parse: Item.init)
+    static let resource = Resource(path: "items", key: "itemsKey", parse: Item.init, resourceType: .Item, FBKeys: Item.itemKeys)
 }
 
 typealias FBDictionary = [String:AnyObject]
@@ -120,52 +101,83 @@ struct Resource<A>: FirebaseObservable {
     let RootRef = FIRDatabase.database().reference()
     let path: String
     let key: String
-    let eventType: FIRDataEventType
     let parse: (FBDictionary?, String, String) -> A?
+    let resourceType: ResourceType
 //    let needsAutoId: Bool
-//    let FBKeys: [String]
+    let FBKeys: [String]
 }
 
-enum MyResourceType {
-    case Item
-    case BodyThing
+enum ResourceType {
+    case Item, BodyThing
 }
-
-let fakeItemKeys: [String:Any.Type] = ["itemMessage" : String.self, "name" : String.self, "additionalInformation" : String.self, "isCheckedOff" : Bool.self]
-
-let itemKeys = ["itemMessage", "name", "additionalInformation", "isCheckedOff"]
-
-let btKeys = ["yummy", "color", "name"]
 
 protocol LoadingType {
-    associatedtype ResourceType
+    associatedtype MyResourceType
     var spinner: UIActivityIndicatorView? { get set }
-    func configureMe(item: ResourceType)
+    func configureMe(item: MyResourceType, _ action: LoadingAction)
 }
 
+enum LoadingAction {
+    case Removed
+    case Added
+}
+
+enum Corn<A> {
+    case Removed(Resource<A>)
+    case Added
+}
+
+//TODO: Pass in .Removed or .Added at call site to remove repeated code
 extension LoadingType where Self: UIViewController {
-    func loadMe(resource: Resource<ResourceType>, withBlock: ResourceType? -> Void) {
+    func loadMe(r: Resource<MyResourceType>, withBlock: (MyResourceType?, LoadingAction) -> Void) {
         spinner?.startAnimating()
-        resource.RootRef.child(resource.path).observeEventType(resource.eventType) { (snapshot: FIRDataSnapshot) in
-            withBlock(resource.parse(snapshot.value as? FBDictionary, snapshot.key, resource.path))
+        r.RootRef.child(r.path).observeEventType(.ChildAdded) { (snapshot: FIRDataSnapshot) in
+            withBlock(r.parse(snapshot.value as? FBDictionary, snapshot.key, r.path), .Added)
+        }
+        r.RootRef.child(r.path).observeEventType(.ChildRemoved) { (snapshot: FIRDataSnapshot) in
+            withBlock(r.parse(snapshot.value as? FBDictionary, snapshot.key, r.path), .Removed)
         }
     }
 }
 
+protocol SendingType {
+    associatedtype MyResourceType
+}
 
-class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, LoadingType {
+extension SendingType where Self: UIViewController {
+    func sendMe(resource r: Resource<MyResourceType>, valueToSend val: String) {
+        print(val, val.wordsInString.count)
+        print("path = \(r.path)")
+        var fbDict: FBDictionary?
+        switch r.resourceType {
+        case .Item:      fbDict = val.toItemFBDictionary()
+        case .BodyThing: print("BodyThing Type")
+        }
+        guard let dict = fbDict else { return }
+        r.RootRef.child(r.path).childByAutoId().setValue(dict)
+    }
+}
+
+
+class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, LoadingType, SendingType {
     
-    var items: [T] = []
-    var didSelect: T -> () = { _ in }
     let resource: Resource<T>
     let configureCell: (UITableViewCell, T) -> ()
     let configureSelf: MyTableViewController -> ()
+    var didSelect: T -> () = { _ in }
     var spinner: UIActivityIndicatorView?
+    var items: [T] = []
+    var nums: [Int] = []
     
-    func configureMe(item: T) {
-        spinner?.stopAnimating()
-        items.append(item)
-        tableView.reloadData()
+    func configureMe(item: T, _ action: LoadingAction) {
+        nums = nums.filter() { $0 != 3 }
+        switch action {
+        case .Added:
+            spinner?.stopAnimating()
+            items.append(item)
+            tableView.reloadData()
+        case .Removed: print("FUCK")
+        }
     }
     
     init(resource: Resource<T>, configureCell: (UITableViewCell, T) -> (), configureSelf: MyTableViewController -> ()) {
@@ -183,9 +195,9 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, Load
     }
     
     private func load() {
-        loadMe(resource) { [weak self] item in
+        loadMe(resource) { [weak self] item, action in
             if let item = item {
-                self?.configureMe(item)
+                self?.configureMe(item, action)
             }
         }
     }
@@ -194,21 +206,14 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, Load
     
     func textFieldShouldReturn(textField: UITextField) -> Bool {
         guard let text = textField.text else { return false }
-//            if !text.isEmpty && text.wordsInString.count < 3 { print(text, text.wordsInString.count); sendResource(resource, itemToSend: text) }
-        print(text)
-        textField.clearText()
+        if !text.isEmpty && text.wordsInString.count < 3 {
+            sendMe(resource: resource, valueToSend: text)
+            textField.clearText()
+        }
         return true
-    }
-    
-    func send(textField: UITextField) {
-        print("SEND")
     }
 
     // MARK: - Table view data source
-
-    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        return 1
-    }
 
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return items.count
@@ -228,7 +233,6 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, Load
         didSelect(item)
     }
     
-
     /*
     // Override to support conditional editing of the table view.
     override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
@@ -236,7 +240,6 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, Load
     }
     */
     
-
     /*
     // Override to support editing the table view.
     override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
@@ -261,16 +264,6 @@ class MyTableViewController<T>: UITableViewController, UITextFieldDelegate, Load
     override func tableView(tableView: UITableView, canMoveRowAtIndexPath indexPath: NSIndexPath) -> Bool {
         // Return false if you do not want the item to be re-orderable.
         return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
     }
     */
 

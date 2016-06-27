@@ -19,7 +19,7 @@ func app() -> UITabBarController {
         myListVC.spinner = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
         myListVC.spinner?.addToSuperView(myListVC)
         
-        let navButt = UIBarButtonItem(barButtonSystemItem: .Add, target: myListVC, action: #selector(myListVC.send))
+        let navButt = UIBarButtonItem(barButtonSystemItem: .Add, target: myListVC, action: nil)
         myListVC.navigationItem.rightBarButtonItem = navButt
         
         let textField = UITextField()
@@ -32,13 +32,13 @@ func app() -> UITabBarController {
     }
     let nav1 = UINavigationController(rootViewController: myListViewController)
     myListViewController.didSelect = { item in
-        let bodyVC = MyTableViewController(resource: item.bodyThings, configureCell: { cell, bodyThing in
+        let bodyThingVC = MyTableViewController(resource: item.bodyThings, configureCell: { cell, bodyThing in
             cell.textLabel?.text = bodyThing.name
             cell.detailTextLabel?.text = bodyThing.color
             cell.accessoryType = bodyThing.isYummy ? .Checkmark : .DisclosureIndicator
             cell.selectionStyle = .None
-        }) { body in body.title = "BodyThing Yo"}
-        nav1.pushViewController(bodyVC, animated: true)
+        }) { bodyVC in bodyVC.title = "BodyThing Yo"}
+        nav1.pushViewController(bodyThingVC, animated: true)
     }
     nav1.tabBarItem = UITabBarItem(title: "My List", image: nil, tag: 0)
     
@@ -80,6 +80,17 @@ extension String {
         var result: [String] = []
         enumerateSubstringsInRange(characters.indices, options: .ByWords) { result.append($0.substring!) }
         return result
+    }
+    
+    func toItemFBDictionary() -> FBDictionary {
+        let wordsArray = self.componentsSeparatedByString(" ")
+        var fbDict: FBDictionary = [:]
+        fbDict["name"]                  = wordsArray[0]
+        fbDict["additionalInformation"] = wordsArray.count < 2 || wordsArray.count > 2 ? "" : wordsArray[1][wordsArray[1].startIndex] == "#" ? wordsArray[1] : ""
+        fbDict["itemMessage"]           = self
+        fbDict["isCheckedOff"]          = false
+        
+        return fbDict
     }
 }
 
