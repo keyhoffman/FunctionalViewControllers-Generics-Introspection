@@ -10,29 +10,29 @@ import UIKit
 import Foundation
 import Firebase
 
-class MyTableViewController<T: FirebaseType>: UITableViewController, UITextFieldDelegate, LoadingType, SendingType {
+class MyTableViewController<T: FirebaseType>: UITableViewController, UITextFieldDelegate, LoadingDisplayType, SendingDisplayType, Configurable {
     
-    let resource: Resource<T>
-    let configureCell: (UITableViewCell, T) -> ()
+    private let resource: Resource<T>
+    private let configureCell: (UITableViewCell, T) -> ()
+    private var items: [T] = []
     let configureSelf: MyTableViewController -> ()
-    var didSelect: T -> () = { _ in }
     var spinner: UIActivityIndicatorView?
-    var items: [T] = []
-    var nums: [Int] = []
+    var didSelect: T -> () = { _ in }
     
-    func configureMe(item: T, _ action: LoadingAction) {
-        nums = nums.filter { $0 != 3 }
-        switch action {
-        case .Added:
+    internal func configureMe(item: T, _ eventType: FIRDataEventType) {
+        switch eventType {
+        case .ChildAdded:
             spinner?.stopAnimating()
             items.append(item)
             tableView.reloadData()
-        case .Removed:
+        case .ChildRemoved:
             if let idx = items.indexOf(item) {
                 items.removeAtIndex(idx)
                 tableView.reloadData()
             }
+        default: break
         }
+        
     }
     
     init(resource: Resource<T>, configureCell: (UITableViewCell, T) -> (), configureSelf: MyTableViewController -> ()) {
@@ -59,6 +59,7 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
     
     // MARK: Textfield Delegate
     
+    //FIXME: This is not Generic!!
     func textFieldShouldReturn(textField: UITextField) -> Bool {
         guard let text = textField.text else { return false }
         if !text.isEmpty && text.wordsInString.count < 3 {

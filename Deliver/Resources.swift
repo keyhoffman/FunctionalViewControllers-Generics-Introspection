@@ -9,10 +9,10 @@
 import Foundation
 import Firebase
 
-typealias FBDictionary = [String:AnyObject]
+typealias FBDictionary = [String : AnyObject]
 
 enum ResourceType {
-    case Item, BodyThing
+    case Item, BodyThing, Offer, User, Location
 }
 
 struct Resource<A>: FirebaseObservable, FireBaseSendable {
@@ -21,8 +21,32 @@ struct Resource<A>: FirebaseObservable, FireBaseSendable {
     let key: String
     let parse: (FBDictionary?, String, String) -> A?
     let resourceType: ResourceType
-    let FBKeys: [String]
-//    let needsAutoId: Bool
+}
+
+struct Offer: FirebaseType {
+    let key: String
+    let path: String
+    let items: [Item]
+    let sender: User
+    let location: Location
+    let status: Status
+    
+    enum Status {
+        case Accecpted, Active, Completed
+    }
+}
+
+struct Location: FirebaseType {
+    let key: String
+    let path: String
+}
+
+struct User: FirebaseType {
+    let key: String
+    let path: String
+    let name: String
+    let email: String
+    
 }
 
 struct Item: FirebaseType {

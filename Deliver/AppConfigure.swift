@@ -9,12 +9,26 @@
 import Foundation
 import UIKit
 
-func app() -> UITabBarController {
+func openingFlow(completed: User -> Void) -> UINavigationController {
     
+    let myVC = MyViewController(resource: User.resource) { vc in
+        vc.title = "Opening Flow"
+    }
+    myVC.didCompleteViewContollerObjective = { user in
+        completed(user)
+    }
+    
+    return UINavigationController(rootViewController: myVC)
+}
+
+func mainApp(user user: User) -> UITabBarController {
+    
+    var i = 0
     let myListViewController = MyTableViewController(resource: Item.resource, configureCell: { cell, item in
-        cell.textLabel?.text = item.name
+        cell.textLabel?.text = "[\(i)]" + item.name
         cell.detailTextLabel?.text = item.additionalInformation
         cell.accessoryType = item.isCheckedOff ? .Checkmark : .DisclosureIndicator
+        i += 1
     }) { myListVC in
         myListVC.spinner = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
         myListVC.spinner?.addToSuperView(myListVC)
@@ -42,6 +56,12 @@ func app() -> UITabBarController {
     nav1.tabBarItem = UITabBarItem(title: "My List", image: nil, tag: 0)
     
     let currentOffersViewController = UIViewController()
+    
+//    let currentOffersViewController = MyTableViewController(resource: <#T##Resource<T>#>, configureCell: { (<#UITableViewCell#>, <#T#>) in
+//        <#code#>
+//        }) { (<#MyTableViewController<T>#>) in
+//            <#code#>
+//    }
     currentOffersViewController.title = "Browse Current Offers"
     let nav2 = UINavigationController(rootViewController: currentOffersViewController)
     nav2.tabBarItem = UITabBarItem(title: "Current Offers", image: nil, tag: 1)
@@ -56,7 +76,6 @@ func app() -> UITabBarController {
     myTabController.viewControllers = [nav1, nav2, nav3]
     
     return myTabController
-    
 }
 
 

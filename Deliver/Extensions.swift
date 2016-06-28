@@ -35,17 +35,18 @@ extension Item {
         self.path = path
     }
     
-    static let itemKeys = ["itemMessage", "name", "additionalInformation", "isCheckedOff"]
-    
-    static let btKeys = ["yummy", "color", "name"]
-    
     var bodyThings: Resource<BodyThing> {
         let btPath = "bodyThing/\(key)"
-        let resource = Resource(path: btPath, key: "bodyThingKey", parse: BodyThing.init, resourceType: .BodyThing, FBKeys: Item.btKeys)
+        let resource = Resource(path: btPath, key: "bodyThingKey", parse: BodyThing.init, resourceType: .BodyThing)
         return resource
     }
     
-    static let resource = Resource(path: "items", key: "itemsKey", parse: Item.init, resourceType: .Item, FBKeys: Item.itemKeys)
+    static let resource = Resource(path: "items", key: "itemsKey", parse: Item.init, resourceType: .Item)
+}
+
+extension User {
+    /// FIXME: FIX THIS!!!!
+    static let resource = Resource(path: "userPath", key: "userKey", parse: Item.init, resourceType: .User)
 }
 
 extension UITextField {
@@ -73,6 +74,7 @@ extension String {
     func convertToItemFBDictionary() -> FBDictionary {
         let wordsArray = self.componentsSeparatedByString(" ")
         var fbDict: FBDictionary = [:]
+        
         fbDict["name"]                  = wordsArray[0]
         fbDict["additionalInformation"] = wordsArray.count < 2 || wordsArray.count > 2 ? "" : wordsArray[1][wordsArray[1].startIndex] == "#" ? wordsArray[1] : ""
         fbDict["itemMessage"]           = self

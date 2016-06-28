@@ -18,9 +18,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         FIRApp.configure()
-        window = UIWindow(frame: UIScreen.mainScreen().bounds)
-        window?.rootViewController = app()
-        window?.makeKeyAndVisible()
+        self.window = UIWindow(frame: UIScreen.mainScreen().bounds)
+        if let user = FIRAuth.auth()?.currentUser, name = user.displayName, email = user.email {
+            let currentUser = User(key: user.uid, path: "USERPATH", name: name, email: email)
+            self.window?.rootViewController = mainApp(user: currentUser)
+        } else {
+            self.window?.rootViewController = openingFlow { user in
+                self.window?.rootViewController = mainApp(user: user)
+            }
+        }
+        self.window?.makeKeyAndVisible()
         return true
     }
 

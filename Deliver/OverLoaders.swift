@@ -8,7 +8,7 @@
 
 import Foundation
 
-func ==<A>(lhs: Resource<A>, rhs: Resource<A>) -> Bool {
+func ==<A> (lhs: Resource<A>, rhs: Resource<A>) -> Bool {
     return lhs.key == rhs.key
 }
 
@@ -16,7 +16,18 @@ func == (lhs: Item, rhs: Item) -> Bool {
     return lhs.key == rhs.key
 }
 
-
 func == (lhs: BodyThing, rhs: BodyThing) -> Bool {
+    return lhs.key == rhs.key
+}
+
+func == (lhs: Offer, rhs: Offer) -> Bool {
+    return lhs.key == rhs.key
+}
+
+func == (lhs: User, rhs: User) -> Bool {
+    return lhs.key == rhs.key
+}
+
+func == (lhs: Location, rhs: Location) -> Bool {
     return lhs.key == rhs.key
 }
