@@ -13,11 +13,11 @@ import Firebase
 class MyTableViewController<T: FirebaseType>: UITableViewController, UITextFieldDelegate, LoadingDisplayType, SendingDisplayType, Configurable {
     
     private let resource: Resource<T>
-    private let configureCell: (UITableViewCell, T) -> ()
+    private let configureCell: (UITableViewCell, T) -> Void
     private var items: [T] = []
-    let configureSelf: MyTableViewController -> ()
+    let configureSelf: MyTableViewController -> Void
     var spinner: UIActivityIndicatorView?
-    var didSelect: T -> () = { _ in }
+    var didSelect: T -> Void = { _ in }
     
     internal func configureMe(item: T, _ eventType: FIRDataEventType) {
         switch eventType {
@@ -35,7 +35,7 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
         
     }
     
-    init(resource: Resource<T>, configureCell: (UITableViewCell, T) -> (), configureSelf: MyTableViewController -> ()) {
+    init(resource: Resource<T>, configureCell: (UITableViewCell, T) -> Void, configureSelf: MyTableViewController -> Void) {
         self.resource = resource
         self.configureCell = configureCell
         self.configureSelf = configureSelf

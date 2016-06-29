@@ -9,6 +9,9 @@
 import Foundation
 import UIKit
 
+enum Errors: ErrorType {
+    case DictionaryWasNil(String)
+}
 
 extension BodyThing {
     init?(data: FBDictionary?, itemID: String, path: String) {
