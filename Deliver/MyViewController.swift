@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Firebase
 
 //protocol Completeable {
 //    associatedtype completedObjective
@@ -16,20 +17,22 @@ import UIKit
 //    func didComplete(completedObjective)
 //}
 
-class MyViewController<T: FirebaseType>: UIViewController, Configurable, UITextFieldDelegate {
+///FIXME: SendingDisplayType conformence error
+class MyViewController<T: FirebaseType>: UIViewController, UITextFieldDelegate, Configurable, LoadingDisplayType, SendingDisplayType {
     
     let resource: Resource<T>
     let configureSelf: MyViewController -> Void
     var didCompleteViewContollerObjective: T -> Void = { _ in }
-    var d: MyViewController -> Void = { _ in}
-    func work() -> MyViewController -> Void {
-        return d
-    }
-    
+    var spinner: UIActivityIndicatorView?
+        
     init(resource: Resource<T>, configureSelf: MyViewController -> Void) {
         self.resource = resource
         self.configureSelf = configureSelf
         super.init(nibName: nil, bundle: nil)
+    }
+    
+    func configureMe(item: T, _ eventType: FIRDataEventType) {
+        print("A")
     }
     
     override func viewDidLoad() {

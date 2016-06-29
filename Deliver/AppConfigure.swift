@@ -11,27 +11,53 @@ import UIKit
 
 final class MainAppFlow: NSObject {
     
-    func please(vc: Int -> Void) {
-        vc(5)
+    private func pushVC<T>(sendingVC vc: MyViewController<T>) {
+        let signUpVC = MyViewController(resource: vc.resource) {
+            $0.title = "Sign Up"
+            $0.view.backgroundColor = .blueColor()
+            
+            
+            let emailTextField = UITextField()
+            emailTextField.delegate = $0
+            emailTextField.becomeFirstResponder()
+            emailTextField.placeholder = "Enter your email"
+            emailTextField.adjustsFontSizeToFitWidth = true
+            emailTextField.autocapitalizationType = .None
+            emailTextField.autocorrectionType = .No
+            emailTextField.clearButtonMode = .Always
+            emailTextField.keyboardAppearance = .Dark
+            emailTextField.keyboardType = .EmailAddress
+            emailTextField.returnKeyType = .Next
+            emailTextField.frame = CGRect(x: 50, y: 150, width: 200, height: 21)
+            
+            $0.view.addSubview(emailTextField)
+            $0.textFieldShouldReturn(textField: emailTextField, num: 7)
+        }
+        vc.navigationController?.pushViewController(signUpVC, animated: true)
     }
+    
+    /// MARK: The logic for opening flow
+    /// Logic is only implemented if Firebase user request returns nil
     
     func openingFlow(completed: User -> Void) -> UINavigationController {
         
-        let openingVC = MyViewController(resource: User.resource) {
-            $0.title = "Welcome to Line Bounce!"
+        let openingVC = MyViewController(resource: User.resource) { openvc in
+            openvc.title = "Welcome to Line Bounce!"
+            openvc.spinner = nil
             
-            $0.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Sign Up", style: .Plain, target: $0, action: #selector($0.work))
-            
+            let button = BlockBarButtonItem(title: "Sign Up", style: .Plain) {
+                self.pushVC(sendingVC: openvc)
+            }
+            openvc.navigationItem.rightBarButtonItem = button
         }
-        openingVC.d = { item in }
         let nav = UINavigationController(rootViewController: openingVC)
-        
         return nav
     }
+    
+    /// MARK: The main app logic
 
     func mainApp(user user: User) -> UITabBarController {
         
-        /// TODO: Add $ syntax for closure type inference
         var i = 0
         let myListViewController = MyTableViewController(resource: Item.resource, configureCell: {
             $0.textLabel?.text = "[\(i)]" + $1.name

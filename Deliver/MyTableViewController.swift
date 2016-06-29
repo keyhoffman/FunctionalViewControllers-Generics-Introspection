@@ -30,7 +30,9 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
                 items.removeAtIndex(idx)
                 tableView.reloadData()
             }
-        default: break
+        case .ChildChanged: break
+        case .ChildMoved:   break
+        case .Value:        break
         }
         
     }
@@ -48,7 +50,7 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
         load()
     }
     
-    private func load() {  loadMe(resource) {  [ weak self ] in if let item = $0 {  self?.configureMe(item, $1)  }  }  }
+    private func load() { loadMe(resource) { [ weak self ] in if let $ = $0 { self?.configureMe($, $1) } } }
     
     // MARK: Textfield Delegate
     
@@ -87,11 +89,11 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
     }
     
     override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        if editingStyle == .Delete {
-            removeMe(resource: resource, valueToRemove: items[indexPath.row])
-        } else if editingStyle == .Insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+        switch editingStyle {
+        case .Delete: removeMe(resource: resource, valueToRemove: items[indexPath.row])
+        case .Insert: break
+        case .None:   break
+        }
     }
 
     /*

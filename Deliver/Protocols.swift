@@ -72,11 +72,18 @@ extension SendingDisplayType where Self: UIViewController {
         r.RootRef.child(r.path).childByAutoId().setValue(dict)
     }
     
-    func textFieldShouldReturn(textfield textField: UITextField, resource r: Resource<MyResourceType>) -> Bool {
-        guard let text = textField.text else { return true }
+    func textFieldShouldReturn(textField t: UITextField, num n: Int) -> Bool {
+        guard let text = t.text else { return true }
+        print("text = \(text, n)")
+        t.clearText()
+        return true
+    }
+    
+    func textFieldShouldReturn(textfield t: UITextField, resource r: Resource<MyResourceType>) -> Bool {
+        guard let text = t.text else { return true }
         if !text.isEmpty {
             sendMe(resource: r, valueToSend: text)
-            textField.clearText()
+            t.clearText()
         }
         return true
     }
