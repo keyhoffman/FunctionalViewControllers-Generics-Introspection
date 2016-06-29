@@ -18,9 +18,13 @@ import UIKit
 
 class MyViewController<T: FirebaseType>: UIViewController, Configurable, UITextFieldDelegate {
     
-    private let resource: Resource<T>
+    let resource: Resource<T>
     let configureSelf: MyViewController -> Void
     var didCompleteViewContollerObjective: T -> Void = { _ in }
+    var d: MyViewController -> Void = { _ in}
+    func work() -> MyViewController -> Void {
+        return d
+    }
     
     init(resource: Resource<T>, configureSelf: MyViewController -> Void) {
         self.resource = resource

@@ -48,8 +48,16 @@ extension Item {
 }
 
 extension User {
-    /// FIXME: FIX THIS!!!!
-    static let resource = Resource(path: "userPath", key: "userKey", parse: Item.init, resourceType: .User)
+    init?(data: FBDictionary?, key: String, path: String) {
+        guard let data = data else { return nil }
+        guard let name = data["name"] as? String, let email = data["email"] as? String else { return nil }
+        self.name = name
+        self.email = email
+        self.key = key
+        self.path = path
+    }
+    
+    static let resource = Resource(path: "userPath", key: "userKey", parse: User.init, resourceType: .User)
 }
 
 extension UITextField {

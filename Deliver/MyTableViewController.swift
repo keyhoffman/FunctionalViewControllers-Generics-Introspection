@@ -12,7 +12,7 @@ import Firebase
 
 class MyTableViewController<T: FirebaseType>: UITableViewController, UITextFieldDelegate, LoadingDisplayType, SendingDisplayType, Configurable {
     
-    private let resource: Resource<T>
+    let resource: Resource<T>
     private let configureCell: (UITableViewCell, T) -> Void
     private var items: [T] = []
     let configureSelf: MyTableViewController -> Void
@@ -42,32 +42,25 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
         super.init(style: .Plain)
     }
 
-
     override func viewDidLoad() {
         super.viewDidLoad()
         configureSelf(self)
         load()
     }
     
-    private func load() {
-        loadMe(resource) { [weak self] item, action in
-            if let item = item {
-                self?.configureMe(item, action)
-            }
-        }
-    }
+    private func load() {  loadMe(resource) {  [ weak self ] in if let item = $0 {  self?.configureMe(item, $1)  }  }  }
     
     // MARK: Textfield Delegate
     
-    //FIXME: This is not Generic!!
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
-        guard let text = textField.text else { return false }
-        if !text.isEmpty && text.wordsInString.count < 3 {
-            sendMe(resource: resource, valueToSend: text)
-            textField.clearText()
-        }
-        return true
-    }
+//    //FIXME: This is not Generic!!
+//    func textFieldShouldReturn(textField: UITextField) -> Bool {
+//        guard let text = textField.text else { return false }
+//        if !text.isEmpty && text.wordsInString.count < 3 {
+//            sendMe(resource: resource, valueToSend: text)
+//            textField.clearText()
+//        }
+//        return true
+//    }
 
     // MARK: - Table view data source
 

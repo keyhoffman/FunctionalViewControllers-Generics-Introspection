@@ -18,6 +18,7 @@
 		03438F081D23060200B2AABE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 03438F061D23060200B2AABE /* GoogleService-Info.plist */; };
 		03438F091D23060200B2AABE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 03438F061D23060200B2AABE /* GoogleService-Info.plist */; };
 		03438F0C1D2336FA00B2AABE /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03438F0B1D2336FA00B2AABE /* MyViewController.swift */; };
+		03438F211D243DB900B2AABE /* SpinnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03438F201D243DB900B2AABE /* SpinnerView.swift */; };
 		03E21D301D1EFAEC00083C7A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E21D2F1D1EFAEC00083C7A /* AppDelegate.swift */; };
 		03E21D381D1EFAEC00083C7A /* Deliver.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 03E21D361D1EFAEC00083C7A /* Deliver.xcdatamodeld */; };
 		03E21D3A1D1EFAEC00083C7A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 03E21D391D1EFAEC00083C7A /* Assets.xcassets */; };
@@ -56,6 +57,7 @@
 		03438EE41D21AF9E00B2AABE /* OverLoaders.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverLoaders.swift; sourceTree = "<group>"; };
 		03438F061D23060200B2AABE /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		03438F0B1D2336FA00B2AABE /* MyViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyViewController.swift; sourceTree = "<group>"; };
+		03438F201D243DB900B2AABE /* SpinnerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpinnerView.swift; sourceTree = "<group>"; };
 		03E21D2C1D1EFAEC00083C7A /* Deliver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Deliver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		03E21D2F1D1EFAEC00083C7A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		03E21D371D1EFAEC00083C7A /* Deliver.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Deliver.xcdatamodel; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				033E9E331D1EFF1C00322A42 /* SearchView.swift */,
+				03438F201D243DB900B2AABE /* SpinnerView.swift */,
 			);
 			name = View;
 			sourceTree = "<group>";
@@ -504,6 +507,7 @@
 				033E9E301D1EFD4900322A42 /* AppConfigure.swift in Sources */,
 				033E9E321D1EFDAD00322A42 /* MyTableViewController.swift in Sources */,
 				03438F0C1D2336FA00B2AABE /* MyViewController.swift in Sources */,
+				03438F211D243DB900B2AABE /* SpinnerView.swift in Sources */,
 				03438EDF1D21AE7900B2AABE /* Protocols.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

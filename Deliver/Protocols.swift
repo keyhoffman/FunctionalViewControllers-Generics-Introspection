@@ -32,7 +32,7 @@ protocol FirebaseObservable: FirebaseType {
 protocol LoadingDisplayType {
     associatedtype MyResourceType: FirebaseType
     
-    var spinner: UIActivityIndicatorView? { get set }
+    var spinner: UIActivityIndicatorView? { get }
     func configureMe(item: MyResourceType, _ eventType: FIRDataEventType)
 }
 
@@ -49,12 +49,12 @@ extension LoadingDisplayType where Self: UIViewController {
     }
 }
 
-protocol Configurable {
+protocol Configurable: class {
     associatedtype VC
     var configureSelf: VC -> () { get }
 }
 
-protocol SendingDisplayType {
+protocol SendingDisplayType: UITextFieldDelegate {
     associatedtype MyResourceType: FirebaseType
 }
 
@@ -62,7 +62,7 @@ extension SendingDisplayType where Self: UIViewController {
     func sendMe(resource r: Resource<MyResourceType>, valueToSend val: String) {
         var fbDict: FBDictionary?
         switch r.resourceType {
-        case .Item:      fbDict = val.convertToItemFBDictionary()
+        case .Item:      fbDict = val.convertToItemFBDictionary() /// TODO: Check to make sure this works without the prior checks
         case .BodyThing: print("BodyThing")
         case .Offer:     print("Offer")
         case .User:      print("User")
@@ -70,6 +70,15 @@ extension SendingDisplayType where Self: UIViewController {
         }
         guard let dict = fbDict else { return }
         r.RootRef.child(r.path).childByAutoId().setValue(dict)
+    }
+    
+    func textFieldShouldReturn(textfield textField: UITextField, resource r: Resource<MyResourceType>) -> Bool {
+        guard let text = textField.text else { return true }
+        if !text.isEmpty {
+            sendMe(resource: r, valueToSend: text)
+            textField.clearText()
+        }
+        return true
     }
     
     func removeMe(resource r: Resource<MyResourceType>, valueToRemove val: MyResourceType) {
