@@ -10,8 +10,10 @@ import Foundation
 import UIKit
 
 class PasswordTextField: UITextField {
-    init(frame: CGRect, isCorn: Bool) {
-        <#code#>
+    
+    init<T: UIViewController where T: UITextFieldDelegate>(frame: CGRect, delegate d: T?) {
+        super.init(frame: frame)
+        if let d = d { self.delegate = d }
     }
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -42,6 +44,15 @@ final class MainAppFlow {
         let openingVC = MyViewController(resource: User.resource) { openvc in
             openvc.title = "Welcome to Line Bounce!"
             openvc.spinner = nil
+            openvc.view.backgroundColor = .lightGrayColor()
+            
+            let frame = CGRect(x: 50, y: 150, width: 200, height: 21)
+            let emailTextField = EmailTextField(frame: frame, isFirstResponder: true, delegate: openvc)
+            
+            openvc.textFieldShouldReturn(textfield: emailTextField, resource: openvc.resource)
+//            openvc.textFieldDidBeginEditing(emailTextField)
+            
+            openvc.view.addSubview(emailTextField)
             
             let button = BlockBarButtonItem(title: "Sign Up", style: .Plain) {
                 self.pushVC(sendingVC: openvc)

@@ -24,11 +24,19 @@ class MyViewController<T: FirebaseType>: UIViewController, UITextFieldDelegate, 
     let configureSelf: MyViewController -> Void
     var didCompleteViewContollerObjective: T -> Void = { _ in }
     var spinner: UIActivityIndicatorView?
+    var textFieldReturnWasPressed: String -> Void = { _ in }
         
     init(resource: Resource<T>, configureSelf: MyViewController -> Void) {
         self.resource = resource
         self.configureSelf = configureSelf
         super.init(nibName: nil, bundle: nil)
+    }
+    
+    /// FIXME: I did this on purpose you stupid idiot
+    unc textFieldShouldReturn(textField: UITextField) -> Bool {
+        guard let text = textField.text else { return false }
+        textFieldReturnWasPressed(text)
+        return true
     }
     
     func configureMe(item: T, _ eventType: FIRDataEventType) { return }

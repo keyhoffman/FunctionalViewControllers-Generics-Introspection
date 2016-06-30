@@ -51,11 +51,12 @@ extension LoadingDisplayType where Self: UIViewController {
 
 protocol Configurable: class {
     associatedtype VC
-    var configureSelf: VC -> () { get }
+    var configureSelf: VC -> Void { get }
 }
 
 protocol SendingDisplayType: UITextFieldDelegate {
     associatedtype MyResourceType: FirebaseType
+    var textFieldReturnWasPressed: String -> Void { get }
 }
 
 extension SendingDisplayType where Self: UIViewController {
@@ -80,10 +81,12 @@ extension SendingDisplayType where Self: UIViewController {
 //    }
     
     func textFieldDidBeginEditing(textField: UITextField) {
-        print(textField.text)
+        print("textFieldDidBeginEditing")
     }
     
     func textFieldShouldReturn(textfield t: UITextField, resource r: Resource<MyResourceType>) -> Bool {
+        print("textFieldShouldReturn")
+        dump(r)
         guard let text = t.text else { return true }
         if !text.isEmpty {
             dump(text)

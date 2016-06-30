@@ -18,6 +18,13 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
     let configureSelf: MyTableViewController -> Void
     var spinner: UIActivityIndicatorView?
     var didSelect: T -> Void = { _ in }
+    var textFieldReturnWasPressed: String -> Void = { _ in }
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        guard let text = textField.text else { return true }
+        textFieldReturnWasPressed(text)
+        return true
+    }
     
     internal func configureMe(item: T, _ eventType: FIRDataEventType) {
         switch eventType {
