@@ -9,29 +9,27 @@
 import Foundation
 import UIKit
 
-final class MainAppFlow: NSObject {
+class PasswordTextField: UITextField {
+    init(frame: CGRect, isCorn: Bool) {
+        <#code#>
+    }
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+final class MainAppFlow {
     
     private func pushVC<T>(sendingVC vc: MyViewController<T>) {
         let signUpVC = MyViewController(resource: vc.resource) {
             $0.title = "Sign Up"
-            $0.view.backgroundColor = .blueColor()
-            
-            
-            let emailTextField = UITextField()
-            emailTextField.delegate = $0
-            emailTextField.becomeFirstResponder()
-            emailTextField.placeholder = "Enter your email"
-            emailTextField.adjustsFontSizeToFitWidth = true
-            emailTextField.autocapitalizationType = .None
-            emailTextField.autocorrectionType = .No
-            emailTextField.clearButtonMode = .Always
-            emailTextField.keyboardAppearance = .Dark
-            emailTextField.keyboardType = .EmailAddress
-            emailTextField.returnKeyType = .Next
-            emailTextField.frame = CGRect(x: 50, y: 150, width: 200, height: 21)
-            
+            $0.view.backgroundColor = .cyanColor()
+
+            let emailTextField = EmailTextField(frame: CGRect(x: 50, y: 150, width: 200, height: 21), isFirstResponder: true, delegate: $0)
+    
             $0.view.addSubview(emailTextField)
-            $0.textFieldShouldReturn(textField: emailTextField, num: 7)
+//            $0.textFieldDidBeginEditing(emailTextField)
+//            $0.textFieldShouldReturn(textfield: emailTextField, resource: $0.resource)
         }
         vc.navigationController?.pushViewController(signUpVC, animated: true)
     }
@@ -70,13 +68,11 @@ final class MainAppFlow: NSObject {
             
             $0.navigationItem.rightBarButtonItem = $0.editButtonItem()
             
-            let textField = UITextField()
-            textField.delegate = $0
-            textField.placeholder = "Search for items"
-            textField.frame = CGRectMake(0, 0, $0.navigationController?.navigationBar.frame.size.width ?? 0, 21)
-            $0.navigationItem.titleView = textField
+            let searchTextField = SearchTextField(frame: CGRect(x: 0, y: 0, width: $0.navigationController?.navigationBar.frame.size.width ?? 0, height: 21), delegate: $0, searchForPlaceholder: "items")
+            $0.navigationItem.titleView = searchTextField
             
-            $0.textFieldShouldReturn(textfield: textField, resource: $0.resource)
+            $0.textFieldShouldReturn(textfield: searchTextField, resource: $0.resource)
+            $0.textFieldDidBeginEditing(searchTextField)
             
     //        $0.textFieldShouldReturn(textField)
         }

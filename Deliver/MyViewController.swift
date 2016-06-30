@@ -31,9 +31,7 @@ class MyViewController<T: FirebaseType>: UIViewController, UITextFieldDelegate, 
         super.init(nibName: nil, bundle: nil)
     }
     
-    func configureMe(item: T, _ eventType: FIRDataEventType) {
-        print("A")
-    }
+    func configureMe(item: T, _ eventType: FIRDataEventType) { return }
     
     override func viewDidLoad() {
         super.viewDidLoad()
