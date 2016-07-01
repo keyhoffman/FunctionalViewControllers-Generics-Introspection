@@ -9,31 +9,45 @@
 import Foundation
 import UIKit
 
-class PasswordTextField: UITextField {
-    
-    init<T: UIViewController where T: UITextFieldDelegate>(frame: CGRect, delegate d: T?) {
-        super.init(frame: frame)
-        if let d = d { self.delegate = d }
-    }
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
 final class MainAppFlow {
     
-    private func pushVC<T>(sendingVC vc: MyViewController<T>) {
-        let signUpVC = MyViewController(resource: vc.resource) {
-            $0.title = "Sign Up"
-            $0.view.backgroundColor = .cyanColor()
-
-            let emailTextField = EmailTextField(frame: CGRect(x: 50, y: 150, width: 200, height: 21), isFirstResponder: true, delegate: $0)
+    private func pushVC<T>(sendingViewController vc: MyViewController<T>, viewControllerAction action: OpeningAction) {
+        print("action = \(action)")
+        let pushedVC = MyViewController(resource: vc.resource) { pvc in
+            let actionView = OpeningActionView(parentViewController: pvc)
     
-            $0.view.addSubview(emailTextField)
-//            $0.textFieldDidBeginEditing(emailTextField)
-//            $0.textFieldShouldReturn(textfield: emailTextField, resource: $0.resource)
+            pvc.title = action.rawValue
+            pvc.view.backgroundColor = .cyanColor()
+            pvc.view.addSubview(actionView)
         }
-        vc.navigationController?.pushViewController(signUpVC, animated: true)
+        vc.navigationController?.pushViewController(pushedVC, animated: true)
+        pushedVC.textFieldReturnWasPressed = { textField in
+            guard let text = textField.text else { throw TextFieldError.TextWasEmpty("Invalid text input") }
+            if !text.isEmpty {
+                switch textField.tag {
+                case 0:
+                    textField.resignFirstResponder()
+                    User.authEmail = text
+                    pushedVC.view.viewWithTag(1)?.hidden = false
+                    pushedVC.view.viewWithTag(1)?.becomeFirstResponder()
+                case 1:
+                    User.authPassword = text
+                    User().authorizeUser(authorizeAction: action) { firUser, error in
+                        if let err = error { print(err.localizedDescription) } /// FIXME: fix the error printout 
+                        else if let firUser = firUser, let email = firUser.email {
+                            let user = User(key: firUser.uid, path: "users", name: "NoNameSet", email: email)
+                            switch action {
+                            case .Login: print("Login Sucess!!!s"); break
+                            case .SignUp: user.sendToFB()
+                            }
+                        } else { print("FAIL") }
+                    }
+                default: throw TextFieldError.TextWasEmpty("Invalid text fields")
+                }
+            } else {
+                throw TextFieldError.TextWasEmpty("Please enter a value")
+            }
+        }
     }
     
     /// MARK: The logic for opening flow
@@ -42,24 +56,21 @@ final class MainAppFlow {
     func openingFlow(completed: User -> Void) -> UINavigationController {
         
         let openingVC = MyViewController(resource: User.resource) { openvc in
-            openvc.title = "Welcome to Line Bounce!"
-            openvc.spinner = nil
-            openvc.view.backgroundColor = .lightGrayColor()
-            
-            let frame = CGRect(x: 50, y: 150, width: 200, height: 21)
-            let emailTextField = EmailTextField(frame: frame, isFirstResponder: true, delegate: openvc)
-            
-            openvc.textFieldShouldReturn(textfield: emailTextField, resource: openvc.resource)
-//            openvc.textFieldDidBeginEditing(emailTextField)
-            
-            openvc.view.addSubview(emailTextField)
-            
-            let button = BlockBarButtonItem(title: "Sign Up", style: .Plain) {
-                self.pushVC(sendingVC: openvc)
+            let signUpButton = BlockBarButtonItem(title: "Sign Up", style: .Plain) {
+                self.pushVC(sendingViewController: openvc, viewControllerAction: .SignUp)
             }
-            openvc.navigationItem.rightBarButtonItem = button
+            
+            let loginButton = BlockBarButtonItem(title: "Login", style: .Plain) {
+                self.pushVC(sendingViewController: openvc, viewControllerAction: .Login)
+            }
+            
+            openvc.title = "Welcome to Line Bounce!"
+            openvc.view.backgroundColor = .lightGrayColor()
+            openvc.navigationItem.rightBarButtonItem = signUpButton
+            openvc.navigationItem.leftBarButtonItem  = loginButton
         }
         let nav = UINavigationController(rootViewController: openingVC)
+        
         return nav
     }
     
@@ -68,44 +79,33 @@ final class MainAppFlow {
     func mainApp(user user: User) -> UITabBarController {
         
         var i = 0
-        let myListViewController = MyTableViewController(resource: Item.resource, configureCell: {
-            $0.textLabel?.text = "[\(i)]" + $1.name
-            $0.detailTextLabel?.text = $1.additionalInformation
-            $0.accessoryType = $1.isCheckedOff ? .Checkmark : .DisclosureIndicator
+        let myListViewController = MyTableViewController(resource: Item.resource, configureCell: { cell, item in
+            cell.textLabel?.text = "[\(i)]" + item.name
+            cell.detailTextLabel?.text = item.additionalInformation
+            cell.accessoryType = item.isCheckedOff ? .Checkmark : .DisclosureIndicator
             i += 1
-        }) {
-            $0.spinner = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
-            $0.spinner?.addToSuperView($0)
+        }) { myListVC in
+            let searchTextField = SearchTextField(frame: CGRect(x: 0, y: 0, width: myListVC.navigationController?.navigationBar.frame.size.width ?? 0, height: 21), delegate: myListVC, searchForPlaceholder: "items")
             
-            $0.navigationItem.rightBarButtonItem = $0.editButtonItem()
-            
-            let searchTextField = SearchTextField(frame: CGRect(x: 0, y: 0, width: $0.navigationController?.navigationBar.frame.size.width ?? 0, height: 21), delegate: $0, searchForPlaceholder: "items")
-            $0.navigationItem.titleView = searchTextField
-            
-            $0.textFieldShouldReturn(textfield: searchTextField, resource: $0.resource)
-            $0.textFieldDidBeginEditing(searchTextField)
-            
-    //        $0.textFieldShouldReturn(textField)
+            myListVC.spinner = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+//            myListVC.spinner?.addToSuperView(myListVC)
+            myListVC.navigationItem.rightBarButtonItem = myListVC.editButtonItem()
+            myListVC.navigationItem.titleView = searchTextField
         }
         let nav1 = UINavigationController(rootViewController: myListViewController)
         myListViewController.didSelect = {
-            let bodyThingVC = MyTableViewController(resource: $0.bodyThings, configureCell: {
-                $0.textLabel?.text = $1.name
-                $0.detailTextLabel?.text = $1.color
-                $0.accessoryType = $1.isYummy ? .Checkmark : .DisclosureIndicator
-                $0.selectionStyle = .None
-            }) { $0.title = "BodyThing Yo" }
+            let bodyThingVC = MyTableViewController(resource: $0.bodyThings, configureCell: { cell, bodyThing in
+                cell.textLabel?.text = bodyThing.name
+                cell.detailTextLabel?.text = bodyThing.color
+                cell.accessoryType = bodyThing.isYummy ? .Checkmark : .DisclosureIndicator
+                cell.selectionStyle = .None
+            }) { bodyVC in bodyVC.title = "BodyThing Yo" }
             nav1.pushViewController(bodyThingVC, animated: true)
         }
         nav1.tabBarItem = UITabBarItem(title: "My List", image: nil, tag: 0)
         
         let currentOffersViewController = UIViewController()
         
-    //    let currentOffersViewController = MyTableViewController(resource: <#T##Resource<T>#>, configureCell: { (<#UITableViewCell#>, <#T#>) in
-    //        <#code#>
-    //        }) { (<#MyTableViewController<T>#>) in
-    //            <#code#>
-    //    }
         currentOffersViewController.title = "Browse Current Offers"
         let nav2 = UINavigationController(rootViewController: currentOffersViewController)
         nav2.tabBarItem = UITabBarItem(title: "Current Offers", image: nil, tag: 1)

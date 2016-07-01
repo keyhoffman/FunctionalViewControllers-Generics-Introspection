@@ -10,6 +10,11 @@ import UIKit
 import Foundation
 import Firebase
 
+enum Result<T> {
+    case Success(T)
+    case Failure(ErrorType)
+}
+
 class MyTableViewController<T: FirebaseType>: UITableViewController, UITextFieldDelegate, LoadingDisplayType, SendingDisplayType, Configurable {
     
     let resource: Resource<T>
@@ -18,31 +23,7 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
     let configureSelf: MyTableViewController -> Void
     var spinner: UIActivityIndicatorView?
     var didSelect: T -> Void = { _ in }
-    var textFieldReturnWasPressed: String -> Void = { _ in }
-    
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
-        guard let text = textField.text else { return true }
-        textFieldReturnWasPressed(text)
-        return true
-    }
-    
-    internal func configureMe(item: T, _ eventType: FIRDataEventType) {
-        switch eventType {
-        case .ChildAdded:
-            spinner?.stopAnimating()
-            items.append(item)
-            tableView.reloadData()
-        case .ChildRemoved:
-            if let idx = items.indexOf(item) {
-                items.removeAtIndex(idx)
-                tableView.reloadData()
-            }
-        case .ChildChanged: break
-        case .ChildMoved:   break
-        case .Value:        break
-        }
-        
-    }
+    let textFieldReturnWasPressed: (UITextField) throws -> Void = { _ in }
     
     init(resource: Resource<T>, configureCell: (UITableViewCell, T) -> Void, configureSelf: MyTableViewController -> Void) {
         self.resource = resource
@@ -60,16 +41,33 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
     private func load() { loadMe(resource) { [ weak self ] in if let $ = $0 { self?.configureMe($, $1) } } }
     
     // MARK: Textfield Delegate
+    // TODO: Move to protocol ext
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        do {
+         try textFieldReturnWasPressed(textField)
+        } catch {
+            
+        }
+        return true
+    }
     
-//    //FIXME: This is not Generic!!
-//    func textFieldShouldReturn(textField: UITextField) -> Bool {
-//        guard let text = textField.text else { return false }
-//        if !text.isEmpty && text.wordsInString.count < 3 {
-//            sendMe(resource: resource, valueToSend: text)
-//            textField.clearText()
-//        }
-//        return true
-//    }
+    func configureMe(item: T, _ eventType: FIRDataEventType) {
+        switch eventType {
+        case .ChildAdded:
+            spinner?.stopAnimating()
+            items.append(item)
+            tableView.reloadData()
+        case .ChildRemoved:
+            if let idx = items.indexOf(item) {
+                items.removeAtIndex(idx)
+                tableView.reloadData()
+            }
+        case .ChildChanged: break
+        case .ChildMoved:   break
+        case .Value:        break
+        }
+        
+    }
 
     // MARK: - Table view data source
 
@@ -77,12 +75,10 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
         return items.count
     }
 
-    
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .Subtitle, reuseIdentifier: nil)
         let item = items[indexPath.row]
         configureCell(cell, item)
-
         return cell
     }
     

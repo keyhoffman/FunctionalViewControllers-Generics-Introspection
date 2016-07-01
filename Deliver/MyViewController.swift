@@ -23,8 +23,9 @@ class MyViewController<T: FirebaseType>: UIViewController, UITextFieldDelegate, 
     let resource: Resource<T>
     let configureSelf: MyViewController -> Void
     var didCompleteViewContollerObjective: T -> Void = { _ in }
+    var textFieldReturnWasPressed: (UITextField) throws -> Void = { _ in }
     var spinner: UIActivityIndicatorView?
-    var textFieldReturnWasPressed: String -> Void = { _ in }
+    var textInputDict: [String:String] = [:]
         
     init(resource: Resource<T>, configureSelf: MyViewController -> Void) {
         self.resource = resource
@@ -32,10 +33,12 @@ class MyViewController<T: FirebaseType>: UIViewController, UITextFieldDelegate, 
         super.init(nibName: nil, bundle: nil)
     }
     
-    /// FIXME: I did this on purpose you stupid idiot
-    unc textFieldShouldReturn(textField: UITextField) -> Bool {
-        guard let text = textField.text else { return false }
-        textFieldReturnWasPressed(text)
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        do {
+            try textFieldReturnWasPressed(textField)
+        } catch {
+            print(error)
+        }
         return true
     }
     
