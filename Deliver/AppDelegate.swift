@@ -20,7 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FIRApp.configure()
         self.window = UIWindow(frame: UIScreen.mainScreen().bounds)
         if let user = FIRAuth.auth()?.currentUser, name = user.displayName, email = user.email {
-            let currentUser = User(key: user.uid, path: "users", name: name, email: email)
+            let currentUser = User(key: user.uid, name: name, email: email)
             self.window?.rootViewController = MainAppFlow().mainApp(user: currentUser)
         } else { self.window?.rootViewController = MainAppFlow().openingFlow { self.window?.rootViewController = MainAppFlow().mainApp(user: $0) } }
         self.window?.makeKeyAndVisible()

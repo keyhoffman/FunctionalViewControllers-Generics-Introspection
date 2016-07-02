@@ -10,13 +10,13 @@ import Foundation
 import Firebase
 
 protocol SendingDisplayType: UITextFieldDelegate {
-    associatedtype MyResourceType: FirebaseType
+    associatedtype T: FireBaseSendable
     func textFieldShouldReturn(textField: UITextField) -> Bool
     var textFieldReturnWasPressed: (UITextField) throws -> Void { get }
 }
 
 extension SendingDisplayType where Self: UIViewController {
-    func sendMe(resource r: Resource<MyResourceType>, valueToSend val: String) {
+    func sendMe(resource r: Resource<T>, valueToSend val: String) {
         var fbDict: FBDictionary?
         switch r.resourceType {
         case .Item:      fbDict = val.convertToItemFBDictionary() /// TODO: Check to make sure this works without the prior checks
@@ -26,11 +26,16 @@ extension SendingDisplayType where Self: UIViewController {
         case .Location:  print("Location")
         }
         guard let dict = fbDict else { return }
-        r.RootRef.child(r.path).childByAutoId().setValue(dict)
+//        r.RootRef.child(r.path).childByAutoId().setValue(dict)
+        print("SendingDisplayType generic path = \(T.path)")
+        if T.needsAutoId { r.RootRef.child(T.path).childByAutoId().setValue(dict) }
+        else {
+            fatalError("FIXME!")
+        }
     }
     
-    func removeMe(resource r: Resource<MyResourceType>, valueToRemove val: MyResourceType) {
-        let path = r.path + "/" + val.key
+    func removeMe(resource r: Resource<T>, valueToRemove val: T) {
+        let path = T.path + "/" + val.key
         r.RootRef.child(path).removeValue()
     }
 }

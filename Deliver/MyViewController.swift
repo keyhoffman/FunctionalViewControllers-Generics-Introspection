@@ -18,11 +18,10 @@ import Firebase
 //}
 
 ///FIXME: SendingDisplayType conformence error
-class MyViewController<T: FirebaseType>: UIViewController, UITextFieldDelegate, Configurable, LoadingDisplayType, SendingDisplayType {
+class MyViewController<T: FireBaseSendable>: UIViewController, UITextFieldDelegate, Configurable, LoadingDisplayType, SendingDisplayType {
     
     let resource: Resource<T>
     let configureSelf: MyViewController -> Void
-    var didCompleteViewContollerObjective: T -> Void = { _ in }
     var textFieldReturnWasPressed: (UITextField) throws -> Void = { _ in }
     var spinner: UIActivityIndicatorView?
     var textInputDict: [String:String] = [:]

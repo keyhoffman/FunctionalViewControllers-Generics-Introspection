@@ -17,12 +17,14 @@ enum ResourceType {
     case Item, BodyThing, Offer, User, Location
 }
 
-struct Resource<A>: FirebaseObservable {
-    let path: String
-    let key: String
-    let parse: (FBDictionary?, String, String) -> A?
+struct Resource<A: FireBaseSendable>: FirebaseObservable {
+//    var key: String { return A.key }
+    let parse: (FBDictionary?, String) -> A?
     let resourceType: ResourceType
+    static var path: String      { return A.path + "/" }
+    static var needsAutoId: Bool { return A.needsAutoId }
 }
+
 
 
 

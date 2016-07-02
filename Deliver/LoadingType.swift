@@ -10,22 +10,22 @@ import Foundation
 import Firebase
 
 protocol LoadingDisplayType {
-    associatedtype MyResourceType: FirebaseType
+    associatedtype T: FireBaseSendable
     
     var spinner: UIActivityIndicatorView? { get }
-    func configureMe(item: MyResourceType, _ eventType: FIRDataEventType)
+    func configureMe(item: T, _ eventType: FIRDataEventType)
 }
 
 /// TODO: Pass in .Removed or .Added at call site to remove repeated code
 
 extension LoadingDisplayType where Self: UIViewController {
-    func loadMe(r: Resource<MyResourceType>, withBlock: (MyResourceType?, FIRDataEventType) -> Void) {
+    func loadMe(r: Resource<T>, withBlock: (T?, FIRDataEventType) -> Void) {
         spinner?.startAnimating()
-        r.RootRef.child(r.path).observeEventType(.ChildAdded) { (snapshot: FIRDataSnapshot) in
-            withBlock(r.parse(snapshot.value as? FBDictionary, snapshot.key, r.path), .ChildAdded)
+        r.RootRef.child(T.path).observeEventType(.ChildAdded) { (snapshot: FIRDataSnapshot) in
+            withBlock(r.parse(snapshot.value as? FBDictionary, snapshot.key), .ChildAdded)
         }
-        r.RootRef.child(r.path).observeEventType(.ChildRemoved) { (snapshot: FIRDataSnapshot) in
-            withBlock(r.parse(snapshot.value as? FBDictionary, snapshot.key, r.path), .ChildRemoved)
+        r.RootRef.child(T.path).observeEventType(.ChildRemoved) { (snapshot: FIRDataSnapshot) in
+            withBlock(r.parse(snapshot.value as? FBDictionary, snapshot.key), .ChildRemoved)
         }
     }
 }

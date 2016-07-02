@@ -15,7 +15,7 @@ enum Result<T> {
     case Failure(ErrorType)
 }
 
-class MyTableViewController<T: FirebaseType>: UITableViewController, UITextFieldDelegate, LoadingDisplayType, SendingDisplayType, Configurable {
+class MyTableViewController<T: FireBaseSendable>: UITableViewController, UITextFieldDelegate, LoadingDisplayType, SendingDisplayType, Configurable {
     
     let resource: Resource<T>
     private let configureCell: (UITableViewCell, T) -> Void
@@ -46,7 +46,7 @@ class MyTableViewController<T: FirebaseType>: UITableViewController, UITextField
         do {
          try textFieldReturnWasPressed(textField)
         } catch {
-            
+            fatalError(String(error))
         }
         return true
     }

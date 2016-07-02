@@ -11,16 +11,16 @@ import UIKit
 
 final class MainAppFlow {
     
-    private func pushVC<T>(sendingViewController vc: MyViewController<T>, viewControllerAction action: OpeningAction) {
+    private func pushVC<T>(sendingViewController sendingVC: MyViewController<T>, viewControllerAction action: OpeningAction, withBlock: User -> Void) {
         print("action = \(action)")
-        let pushedVC = MyViewController(resource: vc.resource) { pvc in
+        let pushedVC = MyViewController(resource: sendingVC.resource) { pvc in
             let actionView = OpeningActionView(parentViewController: pvc)
     
             pvc.title = action.rawValue
             pvc.view.backgroundColor = .cyanColor()
             pvc.view.addSubview(actionView)
         }
-        vc.navigationController?.pushViewController(pushedVC, animated: true)
+        sendingVC.navigationController?.pushViewController(pushedVC, animated: true)
         pushedVC.textFieldReturnWasPressed = { textField in
             guard let text = textField.text else { throw TextFieldError.TextWasEmpty("Invalid text input") }
             if !text.isEmpty {
@@ -35,12 +35,13 @@ final class MainAppFlow {
                     User().authorizeUser(authorizeAction: action) { firUser, error in
                         if let err = error { print(err.localizedDescription) } /// FIXME: fix the error printout 
                         else if let firUser = firUser, let email = firUser.email {
-                            let user = User(key: firUser.uid, path: "users", name: "NoNameSet", email: email)
+                            let user = User(key: firUser.uid, name: "NoNameSet", email: email)
                             switch action {
                             case .Login: print("Login Sucess!!!s"); break
                             case .SignUp: user.sendToFB()
                             }
-                        } else { print("FAIL") }
+                            withBlock(user)
+                        } else { fatalError("WTF!!!") }
                     }
                 default: throw TextFieldError.TextWasEmpty("Invalid text fields")
                 }
@@ -57,11 +58,11 @@ final class MainAppFlow {
         
         let openingVC = MyViewController(resource: User.resource) { openvc in
             let signUpButton = BlockBarButtonItem(title: "Sign Up", style: .Plain) {
-                self.pushVC(sendingViewController: openvc, viewControllerAction: .SignUp)
+                self.pushVC(sendingViewController: openvc, viewControllerAction: .SignUp) { completed($0) }
             }
             
             let loginButton = BlockBarButtonItem(title: "Login", style: .Plain) {
-                self.pushVC(sendingViewController: openvc, viewControllerAction: .Login)
+                self.pushVC(sendingViewController: openvc, viewControllerAction: .Login) { completed($0) }
             }
             
             openvc.title = "Welcome to Line Bounce!"

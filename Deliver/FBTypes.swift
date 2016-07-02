@@ -10,21 +10,17 @@ import Foundation
 import UIKit
 import Firebase
 
-protocol FirebaseType: Equatable {
-    var path: String { get }
-    var key: String  { get }
+protocol FirebaseType {
+//    var key: String         { get }
+    static var path: String { get }
 }
 
-extension FirebaseType {
-    var RootRef: FIRDatabaseReference {
-        return FIRDatabase.database().reference()
-    }
-}
+extension FirebaseType { var RootRef: FIRDatabaseReference { return FIRDatabase.database().reference() } }
 
-protocol FireBaseSendable: FirebaseType {
-    var path: String      { get }
-    var key: String       { get }
-    var needsAutoId: Bool { get }
+protocol FireBaseSendable: FirebaseType, Equatable {
+    var key: String              { get }
+    static var needsAutoId: Bool { get }
+    static var path: String      { get }
 }
 
 extension FireBaseSendable {
@@ -32,9 +28,10 @@ extension FireBaseSendable {
         guard let FBDict = convertToFBSendable() else { return }
         print("-- FBDump --")
         dump(FBDict)
-        if needsAutoId { self.RootRef.child(path).childByAutoId().setValue(FBDict) }
+        if Self.needsAutoId { self.RootRef.child(Self.path).childByAutoId().setValue(FBDict) }
         else {
-            let p = path + "/" + key
+            let p = Self.path + key
+            print("path = \(p)")
             self.RootRef.child(p).setValue(FBDict)
         }
     }
@@ -50,23 +47,14 @@ extension FireBaseSendable {
     }
 }
 
-extension Dictionary {
-    init(_ pairs: [Element]) {
-        self.init()
-        for (k, v) in pairs {
-            self[k] = v
-        }
-    }
-}
-
-
 protocol FirebaseObservable: FirebaseType {
-    var path: String { get }
-    var key: String  { get }
+//    var key: String         { get }
+    static var path: String { get }
     
-    associatedtype M
-    var parse: (FBDictionary?, String, String) -> M? { get }
+    associatedtype A
+    var parse: (FBDictionary?, String) -> A? { get }
 }
+
 
 enum OpeningAction: String {
     case Login  = "Login"
@@ -74,8 +62,8 @@ enum OpeningAction: String {
 }
 
 protocol FBAuthable {
-    static var authEmail: String       { get set }
-    static var authPassword: String    { get set }
+    static var authEmail: String    { get set }
+    static var authPassword: String { get set }
 }
 
 extension FBAuthable {
